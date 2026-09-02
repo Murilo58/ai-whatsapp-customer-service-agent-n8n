@@ -1,0 +1,124 @@
+{
+  "name": "Human Handoff Subworkflow",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "Motivo"
+            },
+            {
+              "name": "Contexto"
+            },
+            {
+              "name": "Telefone"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -832,
+        16
+      ],
+      "id": "9d4b0790-94d1-49a8-9b06-3d6436afc293",
+      "name": "Executado"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Telefone",
+              "condition": "eq",
+              "keyValue": "={{ $json.Telefone }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Tags",
+              "fieldValue": "={{ [\"Atendimento Humano\"] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        16
+      ],
+      "id": "9e351c41-c117-458a-af68-23696c78e053",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "YOUR_SUPABASE_CREDENTIAL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "YOUR_EVOLUTION_INSTANCE",
+        "remoteJid": "YOUR_PHONE_NUMBER@whatsapp.net",
+        "messageText": "=*Atendimento Humano Solicitado*\nTelefone: {{ $('Executado').item.json.Telefone }}\n---\nMotivo: {{ $('Executado').item.json.Motivo }}\nContexto:\n{{ $('Executado').item.json.Contexto }}",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        16
+      ],
+      "id": "0252e66c-75f1-40d4-b68a-fb370b344e96",
+      "name": "AvisarHumano",
+      "credentials": {
+        "evolutionApi": {
+          "id": "YOUR_EVOLUTION_CREDENTIAL_ID",
+          "name": "YOUR_EVOLUTION_CREDENTIAL"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Executado": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row": {
+      "main": [
+        [
+          {
+            "node": "AvisarHumano",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
