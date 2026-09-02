@@ -1,5 +1,7 @@
 # Security
 
+**Docs:** [README](../README.md) · [Architecture](ARCHITECTURE.md) · [How It Works](HOW_IT_WORKS.md) · **Security** · [Setup](SETUP.md)
+
 ## Scope of this repository
 
 This repository contains **sanitized workflow definitions only**. It is safe to
@@ -79,3 +81,7 @@ See `.env.example` for the full list of expected variables and
 - Use least-privilege service accounts for Google Drive and Google Calendar.
 - Scope the Supabase key to only what the vector store and `leads` table need.
 - Restrict who can trigger the conversation-reset keyword.
+
+---
+
+**Docs:** [README](../README.md) · [Architecture](ARCHITECTURE.md) · [How It Works](HOW_IT_WORKS.md) · **Security** · [Setup](SETUP.md)

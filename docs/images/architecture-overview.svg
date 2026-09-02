@@ -1,0 +1,308 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1760 1010" width="1760" height="1010" role="img" aria-labelledby="ttl dsc" font-family="'Segoe UI', ui-sans-serif, system-ui, -apple-system, Helvetica, Arial, sans-serif">
+  <title id="ttl">AI-Powered WhatsApp Customer Service Architecture</title>
+  <desc id="dsc">Layered architecture diagram: inbound WhatsApp channel via Evolution API, n8n main orchestrator with validation, lead upsert, message routing, audio transcription and a Redis buffer with debounce, an AI Agent with LLM, RAG retrieval, embeddings, calculator, MCP client and human-handoff tools, external Google Calendar tools behind an MCP server, a human support handoff, a persistence layer (PostgreSQL, Supabase pgvector, Supabase leads, Redis), an outbound response path, and a separate RAG ingestion pipeline from Google Drive into the Supabase vector store.</desc>
+
+  <defs>
+    <marker id="ah" markerWidth="12" markerHeight="12" refX="8.5" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L9,3.5 L0,7 Z" fill="#9aa4af"/>
+    </marker>
+    <marker id="ahs" markerWidth="12" markerHeight="12" refX="0.5" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M9,0 L0,3.5 L9,7 Z" fill="#9aa4af"/>
+    </marker>
+    <marker id="ahd" markerWidth="12" markerHeight="12" refX="8.5" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L9,3.5 L0,7 Z" fill="#6e7681"/>
+    </marker>
+    <marker id="ahds" markerWidth="12" markerHeight="12" refX="0.5" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M9,0 L0,3.5 L9,7 Z" fill="#6e7681"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1760" height="1010" fill="#0d1117"/>
+
+  <text x="880" y="44" text-anchor="middle" fill="#e6edf3" font-size="28" font-weight="700">AI-Powered WhatsApp Customer Service Architecture</text>
+  <text x="880" y="71" text-anchor="middle" fill="#8b949e" font-size="13">Event-driven n8n orchestration &#183; persistent conversational state &#183; retrieval-augmented generation &#183; MCP tools &#183; human escalation</text>
+
+  <!-- ============ ZONE A : INBOUND ============ -->
+  <rect x="40" y="88" width="1680" height="84" rx="14" fill="#2dd4bf" fill-opacity="0.05" stroke="#2dd4bf" stroke-opacity="0.45" stroke-width="1.4"/>
+  <text x="58" y="108" fill="#2dd4bf" font-size="12" font-weight="700" letter-spacing="1.5">INBOUND CHANNEL</text>
+
+  <g>
+    <rect x="70" y="116" width="150" height="48" rx="9" fill="#161b22" stroke="#2dd4bf" stroke-width="1.6"/>
+    <text x="145" y="145" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600">Customer</text>
+  </g>
+  <g>
+    <rect x="256" y="116" width="150" height="48" rx="9" fill="#161b22" stroke="#2dd4bf" stroke-width="1.6"/>
+    <text x="331" y="139" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600">WhatsApp</text>
+    <text x="331" y="155" text-anchor="middle" fill="#8b949e" font-size="10.5">messaging app</text>
+  </g>
+  <g>
+    <rect x="442" y="116" width="190" height="48" rx="9" fill="#161b22" stroke="#2dd4bf" stroke-width="1.6"/>
+    <text x="537" y="139" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600">Evolution API</text>
+    <text x="537" y="155" text-anchor="middle" fill="#8b949e" font-size="10.5">inbound events</text>
+  </g>
+  <line x1="220" y1="140" x2="252" y2="140" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="406" y1="140" x2="438" y2="140" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="537" y1="164" x2="537" y2="180" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+
+  <!-- ============ ZONE B : ORCHESTRATION ============ -->
+  <rect x="40" y="184" width="1680" height="206" rx="14" fill="#58a6ff" fill-opacity="0.05" stroke="#58a6ff" stroke-opacity="0.45" stroke-width="1.4"/>
+  <text x="58" y="204" fill="#58a6ff" font-size="12" font-weight="700" letter-spacing="1.5">ORCHESTRATION  &#183;  n8n MAIN ORCHESTRATOR</text>
+
+  <g>
+    <rect x="70" y="214" width="150" height="50" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+    <text x="145" y="236" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Webhook intake</text>
+    <text x="145" y="252" text-anchor="middle" fill="#8b949e" font-size="10.5">POST endpoint</text>
+  </g>
+  <g>
+    <rect x="252" y="214" width="230" height="50" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+    <text x="367" y="236" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Validate &amp; normalize</text>
+    <text x="367" y="252" text-anchor="middle" fill="#8b949e" font-size="10.5">dedupe &#183; from-me guard &#183; reset</text>
+  </g>
+  <g>
+    <rect x="514" y="214" width="160" height="50" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+    <text x="594" y="236" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Lead upsert</text>
+    <text x="594" y="252" text-anchor="middle" fill="#8b949e" font-size="10.5">create / update</text>
+  </g>
+  <g>
+    <rect x="706" y="214" width="160" height="50" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+    <text x="786" y="236" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Message router</text>
+    <text x="786" y="252" text-anchor="middle" fill="#8b949e" font-size="10.5">text &#183; audio</text>
+  </g>
+  <g>
+    <rect x="706" y="300" width="210" height="50" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+    <text x="811" y="322" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Audio &#8594; text</text>
+    <text x="811" y="338" text-anchor="middle" fill="#8b949e" font-size="10.5">Gemini 2.5 Flash</text>
+  </g>
+  <g>
+    <rect x="958" y="300" width="250" height="50" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+    <text x="1083" y="322" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Redis buffer &amp; debounce</text>
+    <text x="1083" y="338" text-anchor="middle" fill="#8b949e" font-size="10.5">per-contact &#183; 10s settle</text>
+  </g>
+  <line x1="220" y1="239" x2="252" y2="239" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="482" y1="239" x2="514" y2="239" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="674" y1="239" x2="706" y2="239" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="786" y1="264" x2="786" y2="300" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <polyline points="866,239 936,239 936,325 958,325" fill="none" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="916" y1="325" x2="958" y2="325" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <polyline points="1083,350 1083,368 690,368 690,386" fill="none" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+
+  <!-- ============ ZONE C : AI & KNOWLEDGE ============ -->
+  <rect x="40" y="388" width="1080" height="250" rx="14" fill="#bc8cff" fill-opacity="0.05" stroke="#bc8cff" stroke-opacity="0.45" stroke-width="1.4"/>
+  <text x="58" y="408" fill="#bc8cff" font-size="12" font-weight="700" letter-spacing="1.5">AI  &amp;  KNOWLEDGE</text>
+
+  <g>
+    <rect x="580" y="420" width="220" height="96" rx="10" fill="#1c2333" stroke="#bc8cff" stroke-width="2"/>
+    <text x="690" y="453" text-anchor="middle" fill="#e6edf3" font-size="15.5" font-weight="700">AI Agent</text>
+    <text x="690" y="475" text-anchor="middle" fill="#8b949e" font-size="10.5">intent &#183; tool selection</text>
+    <text x="690" y="491" text-anchor="middle" fill="#8b949e" font-size="10.5">grounded reply &#183; confirm before writes</text>
+  </g>
+  <g>
+    <rect x="90" y="420" width="210" height="50" rx="9" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+    <text x="195" y="442" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">LLM provider</text>
+    <text x="195" y="458" text-anchor="middle" fill="#8b949e" font-size="10.5">OpenAI &#183; gpt-5-mini</text>
+  </g>
+  <g>
+    <rect x="90" y="486" width="210" height="50" rx="9" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+    <text x="195" y="508" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">RAG retrieval tool</text>
+    <text x="195" y="524" text-anchor="middle" fill="#8b949e" font-size="10.5">retrieve-as-tool</text>
+  </g>
+  <g>
+    <rect x="90" y="552" width="210" height="46" rx="9" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+    <text x="195" y="572" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Embeddings</text>
+    <text x="195" y="587" text-anchor="middle" fill="#8b949e" font-size="10.5">Google Gemini</text>
+  </g>
+  <g>
+    <rect x="870" y="420" width="210" height="50" rx="9" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+    <text x="975" y="442" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Calculator tool</text>
+    <text x="975" y="458" text-anchor="middle" fill="#8b949e" font-size="10.5">math helper</text>
+  </g>
+  <g>
+    <rect x="870" y="486" width="210" height="50" rx="9" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+    <text x="975" y="508" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">MCP client tool</text>
+    <text x="975" y="524" text-anchor="middle" fill="#8b949e" font-size="10.5">calls scheduling MCP</text>
+  </g>
+  <g>
+    <rect x="870" y="552" width="210" height="46" rx="9" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+    <text x="975" y="572" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Human-handoff tool</text>
+    <text x="975" y="587" text-anchor="middle" fill="#8b949e" font-size="10.5">invokes sub-workflow</text>
+  </g>
+  <line x1="300" y1="445" x2="580" y2="450" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)" marker-start="url(#ahs)"/>
+  <line x1="300" y1="511" x2="580" y2="486" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)" marker-start="url(#ahs)"/>
+  <line x1="195" y1="552" x2="195" y2="538" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="800" y1="444" x2="870" y2="445" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)" marker-start="url(#ahs)"/>
+  <line x1="800" y1="470" x2="870" y2="511" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)" marker-start="url(#ahs)"/>
+  <line x1="800" y1="496" x2="870" y2="573" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+
+  <!-- reset -> postgres memory -->
+  <polyline points="340,264 340,676" fill="none" stroke="#6e7681" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ahd)"/>
+  <text x="347" y="300" fill="#8b949e" font-size="10">reset &#8658; clear memory</text>
+
+  <!-- agent reply channel -->
+  <polyline points="600,516 600,632 60,632 60,803 66,803" fill="none" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <text x="70" y="626" fill="#8b949e" font-size="10">agent reply &#8594;</text>
+
+  <!-- ============ ZONE D : EXTERNAL TOOLS ============ -->
+  <rect x="1140" y="388" width="580" height="116" rx="14" fill="#39c5cf" fill-opacity="0.05" stroke="#39c5cf" stroke-opacity="0.45" stroke-width="1.4"/>
+  <text x="1158" y="408" fill="#39c5cf" font-size="12" font-weight="700" letter-spacing="1.5">EXTERNAL TOOLS</text>
+  <g>
+    <rect x="1158" y="420" width="200" height="52" rx="9" fill="#161b22" stroke="#39c5cf" stroke-width="1.6"/>
+    <text x="1258" y="442" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">MCP server</text>
+    <text x="1258" y="458" text-anchor="middle" fill="#8b949e" font-size="10.5">n8n MCP trigger</text>
+  </g>
+  <g>
+    <rect x="1392" y="420" width="310" height="52" rx="9" fill="#161b22" stroke="#39c5cf" stroke-width="1.6"/>
+    <text x="1547" y="442" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Google Calendar</text>
+    <text x="1547" y="458" text-anchor="middle" fill="#8b949e" font-size="10.5">search &#183; create &#183; update &#183; delete</text>
+  </g>
+  <polyline points="1080,511 1110,511 1110,446 1158,446" fill="none" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)" marker-start="url(#ahs)"/>
+  <line x1="1358" y1="446" x2="1392" y2="446" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)" marker-start="url(#ahs)"/>
+
+  <!-- ============ ZONE E : HUMAN SUPPORT ============ -->
+  <rect x="1140" y="516" width="580" height="116" rx="14" fill="#ff7b72" fill-opacity="0.05" stroke="#ff7b72" stroke-opacity="0.45" stroke-width="1.4"/>
+  <text x="1158" y="536" fill="#ff7b72" font-size="12" font-weight="700" letter-spacing="1.5">HUMAN SUPPORT</text>
+  <g>
+    <rect x="1158" y="548" width="240" height="52" rx="9" fill="#161b22" stroke="#ff7b72" stroke-width="1.6"/>
+    <text x="1278" y="570" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Human Handoff</text>
+    <text x="1278" y="586" text-anchor="middle" fill="#8b949e" font-size="10.5">tag lead &#183; notify team</text>
+  </g>
+  <g>
+    <rect x="1430" y="548" width="270" height="52" rx="9" fill="#161b22" stroke="#ff7b72" stroke-width="1.6"/>
+    <text x="1565" y="570" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Team notification</text>
+    <text x="1565" y="586" text-anchor="middle" fill="#8b949e" font-size="10.5">via Evolution API</text>
+  </g>
+  <polyline points="1080,573 1118,573 1118,574 1158,574" fill="none" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="1398" y1="574" x2="1430" y2="574" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+
+  <!-- ============ ZONE F : PERSISTENCE ============ -->
+  <rect x="40" y="648" width="1680" height="92" rx="14" fill="#f0b72f" fill-opacity="0.05" stroke="#f0b72f" stroke-opacity="0.45" stroke-width="1.4"/>
+  <text x="58" y="668" fill="#f0b72f" font-size="12" font-weight="700" letter-spacing="1.5">PERSISTENCE   (state keyed by customer phone number)</text>
+  <g>
+    <rect x="180" y="676" width="290" height="54" rx="9" fill="#161b22" stroke="#f0b72f" stroke-width="1.6"/>
+    <text x="325" y="699" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">PostgreSQL</text>
+    <text x="325" y="716" text-anchor="middle" fill="#8b949e" font-size="10.5">chat memory &#183; n8n_chat_histories</text>
+  </g>
+  <g>
+    <rect x="496" y="676" width="300" height="54" rx="9" fill="#161b22" stroke="#f0b72f" stroke-width="1.6"/>
+    <text x="646" y="699" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Supabase / pgvector</text>
+    <text x="646" y="716" text-anchor="middle" fill="#8b949e" font-size="10.5">documents &#183; match_documents</text>
+  </g>
+  <g>
+    <rect x="822" y="676" width="250" height="54" rx="9" fill="#161b22" stroke="#f0b72f" stroke-width="1.6"/>
+    <text x="947" y="699" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Supabase &#8212; leads</text>
+    <text x="947" y="716" text-anchor="middle" fill="#8b949e" font-size="10.5">status &#183; tags &#183; counters</text>
+  </g>
+  <g>
+    <rect x="1098" y="676" width="220" height="54" rx="9" fill="#161b22" stroke="#f0b72f" stroke-width="1.6"/>
+    <text x="1208" y="699" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Redis</text>
+    <text x="1208" y="716" text-anchor="middle" fill="#8b949e" font-size="10.5">per-contact buffer</text>
+  </g>
+  <text x="1360" y="698" fill="#8b949e" font-size="10.5">Dashed = state read / write</text>
+
+  <line x1="270" y1="676" x2="270" y2="652" stroke="#6e7681" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ahd)" marker-start="url(#ahds)"/>
+  <text x="270" y="646" text-anchor="middle" fill="#8b949e" font-size="9.5">AI Agent memory</text>
+  <line x1="646" y1="676" x2="646" y2="652" stroke="#6e7681" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ahd)" marker-start="url(#ahds)"/>
+  <text x="646" y="646" text-anchor="middle" fill="#8b949e" font-size="9.5">RAG retrieval</text>
+  <line x1="947" y1="676" x2="947" y2="652" stroke="#6e7681" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ahd)" marker-start="url(#ahds)"/>
+  <text x="947" y="646" text-anchor="middle" fill="#8b949e" font-size="9.5">lead upsert + handoff</text>
+  <line x1="1208" y1="676" x2="1208" y2="652" stroke="#6e7681" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ahd)" marker-start="url(#ahds)"/>
+  <text x="1208" y="646" text-anchor="middle" fill="#8b949e" font-size="9.5">message debounce</text>
+
+  <!-- pgvector <-> ingestion output -->
+  <polyline points="720,730 720,744 1426,744 1426,850" fill="none" stroke="#6e7681" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ahd)" marker-start="url(#ahds)"/>
+  <text x="1120" y="740" text-anchor="middle" fill="#8b949e" font-size="9.5">documents upsert / query</text>
+
+  <!-- ============ ZONE G : OUTBOUND ============ -->
+  <rect x="40" y="750" width="1680" height="92" rx="14" fill="#3fb950" fill-opacity="0.05" stroke="#3fb950" stroke-opacity="0.45" stroke-width="1.4"/>
+  <text x="58" y="770" fill="#3fb950" font-size="12" font-weight="700" letter-spacing="1.5">OUTBOUND RESPONSE</text>
+  <g>
+    <rect x="66" y="778" width="190" height="50" rx="9" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+    <text x="161" y="800" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Response splitter</text>
+    <text x="161" y="816" text-anchor="middle" fill="#8b949e" font-size="10.5">paragraph parts</text>
+  </g>
+  <g>
+    <rect x="300" y="778" width="190" height="50" rx="9" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+    <text x="395" y="800" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Typing&#8230; presence</text>
+    <text x="395" y="816" text-anchor="middle" fill="#8b949e" font-size="10.5">Evolution API</text>
+  </g>
+  <g>
+    <rect x="534" y="778" width="190" height="50" rx="9" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+    <text x="629" y="800" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Send message</text>
+    <text x="629" y="816" text-anchor="middle" fill="#8b949e" font-size="10.5">Evolution API</text>
+  </g>
+  <g>
+    <rect x="768" y="778" width="160" height="50" rx="9" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+    <text x="848" y="807" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">WhatsApp</text>
+  </g>
+  <g>
+    <rect x="972" y="778" width="160" height="50" rx="9" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+    <text x="1052" y="807" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Customer</text>
+  </g>
+  <line x1="256" y1="803" x2="300" y2="803" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="490" y1="803" x2="534" y2="803" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="724" y1="803" x2="768" y2="803" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="928" y1="803" x2="972" y2="803" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <polyline points="560,828 560,838 395,838 395,828" fill="none" stroke="#6e7681" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ahd)"/>
+  <text x="478" y="837" text-anchor="middle" fill="#8b949e" font-size="9.5">repeat per part</text>
+
+  <!-- ============ ZONE H : RAG INGESTION ============ -->
+  <rect x="40" y="850" width="1680" height="96" rx="14" fill="#a5b4fc" fill-opacity="0.06" stroke="#a5b4fc" stroke-opacity="0.5" stroke-width="1.4"/>
+  <text x="58" y="870" fill="#a5b4fc" font-size="12" font-weight="700" letter-spacing="1.5">RAG INGESTION PIPELINE</text>
+  <g>
+    <rect x="64" y="880" width="150" height="46" rx="9" fill="#161b22" stroke="#a5b4fc" stroke-width="1.6"/>
+    <text x="139" y="900" text-anchor="middle" fill="#e6edf3" font-size="12.5" font-weight="600">Google Drive</text>
+    <text x="139" y="915" text-anchor="middle" fill="#8b949e" font-size="10">folder watch</text>
+  </g>
+  <g>
+    <rect x="230" y="880" width="150" height="46" rx="9" fill="#161b22" stroke="#a5b4fc" stroke-width="1.6"/>
+    <text x="305" y="900" text-anchor="middle" fill="#e6edf3" font-size="12.5" font-weight="600">File metadata</text>
+    <text x="305" y="915" text-anchor="middle" fill="#8b949e" font-size="10">id &#183; name</text>
+  </g>
+  <g>
+    <rect x="396" y="880" width="170" height="46" rx="9" fill="#161b22" stroke="#a5b4fc" stroke-width="1.6"/>
+    <text x="481" y="900" text-anchor="middle" fill="#e6edf3" font-size="12.5" font-weight="600">Purge stale chunks</text>
+    <text x="481" y="915" text-anchor="middle" fill="#8b949e" font-size="10">by file_id</text>
+  </g>
+  <g>
+    <rect x="582" y="880" width="180" height="46" rx="9" fill="#161b22" stroke="#a5b4fc" stroke-width="1.6"/>
+    <text x="672" y="900" text-anchor="middle" fill="#e6edf3" font-size="12.5" font-weight="600">Download &amp; extract</text>
+    <text x="672" y="915" text-anchor="middle" fill="#8b949e" font-size="10">text/plain</text>
+  </g>
+  <g>
+    <rect x="778" y="880" width="170" height="46" rx="9" fill="#161b22" stroke="#a5b4fc" stroke-width="1.6"/>
+    <text x="863" y="900" text-anchor="middle" fill="#e6edf3" font-size="12.5" font-weight="600">Split by headings</text>
+    <text x="863" y="915" text-anchor="middle" fill="#8b949e" font-size="10">&#8220;# &#8221; blocks</text>
+  </g>
+  <g>
+    <rect x="964" y="880" width="170" height="46" rx="9" fill="#161b22" stroke="#a5b4fc" stroke-width="1.6"/>
+    <text x="1049" y="900" text-anchor="middle" fill="#e6edf3" font-size="12.5" font-weight="600">Recursive chunking</text>
+    <text x="1049" y="915" text-anchor="middle" fill="#8b949e" font-size="10">size 10000</text>
+  </g>
+  <g>
+    <rect x="1150" y="880" width="160" height="46" rx="9" fill="#161b22" stroke="#a5b4fc" stroke-width="1.6"/>
+    <text x="1230" y="906" text-anchor="middle" fill="#e6edf3" font-size="12.5" font-weight="600">Gemini embeddings</text>
+  </g>
+  <g>
+    <rect x="1326" y="880" width="200" height="46" rx="9" fill="#161b22" stroke="#a5b4fc" stroke-width="1.6"/>
+    <text x="1426" y="900" text-anchor="middle" fill="#e6edf3" font-size="12.5" font-weight="600">Supabase Vector Store</text>
+    <text x="1426" y="915" text-anchor="middle" fill="#8b949e" font-size="10">insert &#183; documents</text>
+  </g>
+  <line x1="214" y1="903" x2="230" y2="903" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="380" y1="903" x2="396" y2="903" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="566" y1="903" x2="582" y2="903" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="762" y1="903" x2="778" y2="903" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="948" y1="903" x2="964" y2="903" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="1134" y1="903" x2="1150" y2="903" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="1310" y1="903" x2="1326" y2="903" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#ah)"/>
+
+  <!-- ============ LEGEND ============ -->
+  <g font-size="11.5" fill="#c9d1d9">
+    <rect x="64"   y="966" width="14" height="14" rx="3" fill="#2dd4bf"/><text x="86"   y="977">Inbound channel</text>
+    <rect x="240"  y="966" width="14" height="14" rx="3" fill="#58a6ff"/><text x="262"  y="977">Orchestration</text>
+    <rect x="410"  y="966" width="14" height="14" rx="3" fill="#bc8cff"/><text x="432"  y="977">AI &amp; knowledge</text>
+    <rect x="588"  y="966" width="14" height="14" rx="3" fill="#39c5cf"/><text x="610"  y="977">External tools</text>
+    <rect x="756"  y="966" width="14" height="14" rx="3" fill="#ff7b72"/><text x="778"  y="977">Human support</text>
+    <rect x="928"  y="966" width="14" height="14" rx="3" fill="#f0b72f"/><text x="950"  y="977">Persistence</text>
+    <rect x="1086" y="966" width="14" height="14" rx="3" fill="#3fb950"/><text x="1108" y="977">Outbound response</text>
+    <rect x="1280" y="966" width="14" height="14" rx="3" fill="#a5b4fc"/><text x="1302" y="977">RAG ingestion</text>
+  </g>
+</svg>

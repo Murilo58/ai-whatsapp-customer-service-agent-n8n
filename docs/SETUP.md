@@ -1,5 +1,7 @@
 # Setup
 
+**Docs:** [README](../README.md) · [Architecture](ARCHITECTURE.md) · [How It Works](HOW_IT_WORKS.md) · [Security](SECURITY.md) · **Setup**
+
 This guide is intentionally generic. It lists what the architecture needs and how
 the pieces fit together, not vendor-specific instructions.
 
@@ -100,6 +102,11 @@ the pieces fit together, not vendor-specific instructions.
 - Ask to book, then confirm → event appears in Google Calendar after an explicit
   confirmation.
 - Ask for a human → lead gets the `Atendimento Humano` tag and the team receives
-  the notification; automatic replies stop.
+  the notification; automatic replies stop. *(Verify the tag value the guard
+  checks — see [`HOW_IT_WORKS.md` §13](HOW_IT_WORKS.md#13-lead-management).)*
 - Send the reset keyword → stored conversation memory for that contact is
   cleared.
+
+---
+
+**Docs:** [README](../README.md) · [Architecture](ARCHITECTURE.md) · [How It Works](HOW_IT_WORKS.md) · [Security](SECURITY.md) · **Setup**
