@@ -2,11 +2,14 @@
 
 **Docs:** [README](../README.md) · **Architecture** · [How It Works](HOW_IT_WORKS.md) · [Security](SECURITY.md) · [Setup](SETUP.md)
 
+![Solution Architecture](images/architecture.svg)
+
 The solution is split into **four n8n workflows**. Each has a single
 responsibility and a stable interface, so they can be deployed and evolved
-independently. For a rendered, layered view see
-[`images/architecture-overview.svg`](images/architecture-overview.svg); for the
-node-level specification see [`HOW_IT_WORKS.md`](HOW_IT_WORKS.md).
+independently. The diagram above is the high-level view; a more detailed layered
+diagram is in
+[`images/architecture-overview.svg`](images/architecture-overview.svg), and the
+node-level specification is in [`HOW_IT_WORKS.md`](HOW_IT_WORKS.md).
 
 | Workflow | File | Responsibility | Interface exposed |
 |----------|------|----------------|-------------------|

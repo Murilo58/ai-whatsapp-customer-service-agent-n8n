@@ -2,6 +2,18 @@
 
 **Docs:** [README](../README.md) · [Architecture](ARCHITECTURE.md) · [How It Works](HOW_IT_WORKS.md) · **Security** · [Setup](SETUP.md)
 
+## At a glance
+
+- The repository contains **sanitized workflow exports only**.
+- **Production secrets are not versioned.**
+- Credentials must be configured directly in **n8n / the environment**, never in
+  the workflow JSON.
+- **Real webhook URLs and infrastructure endpoints** (including the MCP endpoint)
+  were removed.
+- **Production execution data (`pinData`) and PII** were removed.
+- **`.env` files must never be committed** — only `.env.example` (placeholders) is
+  tracked.
+
 ## Scope of this repository
 
 This repository contains **sanitized workflow definitions only**. It is safe to

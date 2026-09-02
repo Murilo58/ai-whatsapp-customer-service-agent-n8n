@@ -1,39 +1,36 @@
 # AI WhatsApp Customer Service Agent
 
-**A modular, event-driven AI customer-service architecture for WhatsApp, built on n8n.**
-It receives text and voice messages, answers from a maintained knowledge base using
-retrieval-augmented generation, manages appointments through calendar tools exposed
-over the Model Context Protocol, keeps per-contact conversational state, tracks
-leads, and hands off to a human agent through a dedicated escalation flow.
+> Production-oriented AI customer service architecture for WhatsApp using n8n, RAG, MCP and human handoff.
 
-![Built with n8n](https://img.shields.io/badge/built%20with-n8n-EA4B71)
-![Workflows](https://img.shields.io/badge/workflows-4-58a6ff)
-![Secrets](https://img.shields.io/badge/credentials-none%20committed-3fb950)
+A **modular, event-driven architecture** for automating customer service on
+WhatsApp with an AI agent, designed for real operational scenarios. It receives
+text and voice messages, answers from a maintained knowledge base using
+retrieval-augmented generation, performs appointment operations through calendar
+tools exposed over the Model Context Protocol, keeps per-contact conversational
+state, tracks leads, and escalates to a human through a dedicated flow — delivered
+as **four independently deployable n8n workflows** with explicit interfaces
+between them.
 
-**Quick links:** [Architecture](#4-architecture-overview) · [How it works](#5-how-it-works) · [Workflow ecosystem](#6-workflow-ecosystem) · [Setup](#12-setup) · [Full spec »](docs/HOW_IT_WORKS.md) · [Architecture doc »](docs/ARCHITECTURE.md)
+![n8n](https://img.shields.io/badge/n8n-workflow%20automation-EA4B71)
+![WhatsApp](https://img.shields.io/badge/channel-WhatsApp-25D366)
+![AI](https://img.shields.io/badge/AI-agent%20%2B%20RAG-bc8cff)
+![MCP](https://img.shields.io/badge/tools-MCP-39c5cf)
+![Supabase](https://img.shields.io/badge/vector%20store-Supabase-3ECF8E)
+![PostgreSQL](https://img.shields.io/badge/memory-PostgreSQL-336791)
+![credentials](https://img.shields.io/badge/credentials-none%20committed-3fb950)
 
----
-
-## 1. Positioning statement
-
-This is not a simple WhatsApp chatbot. It is a modular AI customer-service
-architecture that combines **event-driven workflow orchestration**, **per-contact
-persistent conversational state**, **retrieval-augmented generation over a
-maintained knowledge base**, **tool integration through the Model Context
-Protocol**, **message buffering with debounce**, and a **deterministic
-human-escalation path** — delivered as four independently deployable n8n
-workflows with explicit interfaces between them.
+**Quick links:** [Architecture](#architecture) · [Workflows](#workflows) · [How It Works](#how-it-works) · [Production-Oriented Design](#production-oriented-design) · [Setup](#setup) · [Technical spec »](docs/HOW_IT_WORKS.md)
 
 ---
 
-## 2. Project overview
+## Overview
 
 **Business problem.** Inbound customer service on WhatsApp is high-volume,
 repetitive, and time-sensitive. Most questions are answerable from known company
 information; many requests are appointment operations (book, reschedule, cancel);
-a minority genuinely need a human. Handling all of this manually is slow and does
-not scale, and a naive bot that "just calls an LLM" invents facts, loses context
-between messages, and cannot take real actions.
+a minority genuinely need a human. Handling this manually does not scale, and a
+naive bot that "just calls an LLM" invents facts, loses context between messages,
+and cannot take real actions.
 
 **Implemented solution.** An n8n-based system where an LLM **agent** sits behind a
 disciplined orchestration layer:
@@ -50,18 +47,145 @@ retrieved context or tool output, and produces the customer-facing reply. State,
 delivery, knowledge ingestion, and escalation are handled by the surrounding
 workflows.
 
-**Operational benefits.** Repetitive questions and routine scheduling are handled
+**What is claimed.** Repetitive questions and routine scheduling are handled
 without human involvement; conversation context is preserved across messages and
-sessions; the knowledge base can be updated by dropping a document in a folder;
-and escalation to a human is deterministic and carries full context. *(No
-volume, latency, deflection-rate, or accuracy figures are claimed — none are
-measured in this repository.)*
+sessions; the knowledge base is updated by dropping a document in a folder; and
+escalation is deterministic and carries full context. *No volume, latency,
+deflection-rate, or accuracy figures are claimed — none are measured in this
+repository.*
 
 ---
 
-## 3. Core capabilities
+## Architecture
 
-Only capabilities that are actually present in the workflow definitions are listed.
+![Solution Architecture](docs/images/architecture.svg)
+
+The solution is split into **four specialized n8n workflows**. This decouples
+responsibilities — message orchestration, knowledge ingestion, scheduling tools,
+and human escalation — so each component can be deployed, versioned, and evolved
+independently, communicating only through small, explicit interfaces (an HTTP
+webhook, an MCP endpoint, a sub-workflow call, and a shared vector table).
+
+**Layers**
+
+- **Inbound channel** — the customer, WhatsApp, and the Evolution API gateway that
+  delivers events to n8n.
+- **Orchestration** — webhook intake, validation and normalization, lead upsert,
+  text/audio routing, audio transcription, and the Redis buffer/debounce.
+- **AI & knowledge** — the AI Agent plus its LLM, RAG retrieval tool, embeddings,
+  MCP client tool, calculator, and human-handoff tool.
+- **External tools** — the MCP server workflow and the Google Calendar operations
+  behind it.
+- **Persistence** — PostgreSQL (chat memory), Supabase / `pgvector` (knowledge),
+  Supabase `leads` (lead store), Redis (per-contact buffer).
+- **Human support** — the handoff sub-workflow: tag the lead, notify the operator.
+- **Response path** — response processing, presence, and delivery back through the
+  Evolution API to WhatsApp.
+
+A component-level walkthrough with a Mermaid system diagram is in
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); a more detailed layered diagram is
+in [`docs/images/architecture-overview.svg`](docs/images/architecture-overview.svg);
+the node-level technical specification is in
+[`docs/HOW_IT_WORKS.md`](docs/HOW_IT_WORKS.md).
+
+---
+
+## Workflows
+
+The sanitized workflow exports live in [`workflows/`](workflows/).
+
+| Workflow | Responsibility |
+|---|---|
+| **Main AI Agent** — [`ai-agent-main.json`](workflows/ai-agent-main.json) | Message processing and normalization; lead management (create / update in Supabase `leads`); conversation memory (PostgreSQL, keyed by contact); the AI Agent and its tool-selection decisions; and response processing (splitting the reply, presence, delivery) — or escalation when the agent calls the handoff tool. |
+| **RAG Knowledge Base** — [`rag-knowledge-base.json`](workflows/rag-knowledge-base.json) | Document ingestion from a watched Google Drive folder: download and text extraction, splitting by heading then recursive chunking, embeddings, and insertion into the Supabase vector store. Idempotent per file (previous chunks are deleted before re-insert). |
+| **MCP Calendar Tools** — [`calendar-mcp-tools.json`](workflows/calendar-mcp-tools.json) | Calendar availability lookup, event creation, event update, and event cancellation on Google Calendar — exposed to the agent as tools over an MCP server endpoint (n8n MCP trigger), consumed by the main workflow through an MCP client tool. |
+| **Human Handoff** — [`human-handoff.json`](workflows/human-handoff.json) | Escalation of a conversation to human support: update the lead status/tag in Supabase and send a WhatsApp notification (reason and context) to the operator. |
+
+---
+
+## How It Works
+
+1. A customer sends a WhatsApp message.
+2. The Evolution API forwards the event to the n8n main workflow's webhook.
+3. The workflow normalizes the payload, drops messages sent by the business
+   itself, applies the reset-keyword check, and upserts the lead.
+4. Text is used as-is; voice notes are converted to binary and transcribed to
+   text. If the lead is already tagged for human service, the message is recorded
+   to memory only and the agent does not run.
+5. Fragments are buffered per contact in Redis and, after a short settle window,
+   joined into a single prompt (debounce).
+6. The AI Agent evaluates context and intent with PostgreSQL memory and its tools.
+7. Knowledge questions are answered via RAG retrieval from the Supabase vector
+   store.
+8. Scheduling requests use the MCP calendar tools (Google Calendar), with an
+   explicit customer confirmation before any create / update / cancel.
+9. Conversation context is persisted; complex or sensitive cases are escalated to
+   a human via the handoff sub-workflow.
+10. The response is processed (split into parts, presence, send) and returned to
+    WhatsApp through the Evolution API.
+
+Full detail — state transitions, error paths, and per-component responsibilities —
+is in [`docs/HOW_IT_WORKS.md`](docs/HOW_IT_WORKS.md).
+
+---
+
+## Production-Oriented Design
+
+The architecture is built around the concerns that matter when an AI-driven
+service runs against real traffic:
+
+- **Persistent conversation memory** — chat history in PostgreSQL, keyed by
+  contact, available to the agent and survivable across restarts.
+- **Retrieval-Augmented Generation (RAG)** — answers about the business are
+  grounded in retrieved knowledge-base chunks, not model recall.
+- **External tool integration** — the agent acts on the world (calendar, lead
+  store, escalation) through explicit tools, not free-form output.
+- **MCP-based tool orchestration** — scheduling capabilities are exposed over the
+  Model Context Protocol, decoupling the agent from the calendar implementation.
+- **Lead management** — every contact is tracked (status, tags, counters,
+  last-interaction) in a dedicated store.
+- **Audio processing** — voice notes are transcribed to text before the agent, so
+  one reasoning path serves both channels.
+- **Controlled execution of actions** — the agent runs one tool at a time and
+  reacts to each result before deciding the next step.
+- **Explicit confirmation before critical operations** — no calendar create,
+  update, or cancel happens without a summary shown and an explicit customer
+  confirmation.
+- **Human escalation** — a deterministic path tags the lead and notifies the
+  operator with full context; automated replies then stop for that contact.
+- **Modular workflow architecture** — four workflows with small, explicit
+  interfaces; independent deploy, versioning, and scaling.
+- **Anti-hallucination rules** — the agent prompt forbids inventing prices,
+  services, hours, or availability, and requires deferring to the team when the
+  knowledge base has no answer.
+- **Separation of knowledge retrieval and transactional actions** — reading
+  context (RAG) and changing state (calendar, leads, handoff) are distinct paths
+  with different guarantees.
+
+### Design decisions
+
+- **Redis buffer + debounce** consolidates a burst of quick messages into one
+  complete prompt and suppresses duplicate processing.
+- **RAG as a separate workflow** lets the knowledge base be re-chunked and
+  re-embedded without touching or redeploying the agent, and keeps the
+  delete-then-reinsert idempotency logic off the request path.
+- **MCP for scheduling** means the agent calls a capability, not an
+  implementation, so the calendar layer can change or be reused independently.
+- **Handoff as its own flow** keeps escalation deterministic, reusable, and
+  isolated from the conversational path.
+
+### Not included
+
+This repository ships a production-oriented **architecture**, not a turnkey
+deployment. There is no automated test suite, no global error-handling / retry /
+dead-letter workflow, and no structured logging, metrics, tracing, or alerting.
+Those are prerequisites before any deployment can be called "production-ready".
+
+---
+
+## Core Capabilities
+
+Only capabilities present in the workflow definitions are listed.
 
 | Capability | How it is implemented |
 |---|---|
@@ -75,162 +199,14 @@ Only capabilities that are actually present in the workflow definitions are list
 | **Tool integration via MCP** | Scheduling is a standalone MCP server; the main workflow consumes it through an MCP client tool. |
 | **Appointment management** | Calendar tools for **search, create, update, and delete** events on a Google Calendar. |
 | **Lead management** | Contacts are upserted into a Supabase `leads` table (name, phone, status, tags, message count, last interaction). |
-| **Human handoff** | An agent tool invokes a sub-workflow that tags the lead and notifies the operations team with reason and context. |
+| **Human handoff** | An agent tool invokes a sub-workflow that tags the lead and notifies the operator with reason and context. |
 | **Anti-hallucination rules** | The agent system prompt forbids inventing prices, services, hours, or availability, and requires consulting the knowledge base or deferring to the team. |
 | **Confirmation before critical actions** | The prompt requires an explicit customer confirmation and a summary before any create / update / delete on the calendar. |
-| **Post-handoff guard** | Once a lead is tagged for human service, the main workflow routes new messages to a memory-only branch instead of the agent. See [Limitations](#14-limitations-and-roadmap). |
+| **Post-handoff guard** | Once a lead is tagged for human service, the main workflow routes new messages to a memory-only branch instead of the agent. See [Limitations](#limitations-and-roadmap). |
 
 ---
 
-## 4. Architecture overview
-
-<p align="center">
-  <a href="docs/images/architecture-overview.svg">
-    <img src="docs/images/architecture-overview.svg" alt="AI-Powered WhatsApp Customer Service Architecture — layered diagram" width="100%">
-  </a>
-</p>
-
-<p align="center"><sub>Click the diagram to open it full size.</sub></p>
-
-**Layers**
-
-- **Inbound channel** — the customer, WhatsApp, and the Evolution API gateway that
-  delivers events to n8n.
-- **Orchestration (n8n main orchestrator)** — webhook intake, validation and
-  normalization, lead upsert, text/audio routing, audio transcription, and the
-  Redis buffer/debounce.
-- **AI & knowledge** — the AI Agent plus its LLM, RAG retrieval tool, embeddings,
-  calculator, MCP client tool, and human-handoff tool.
-- **External tools** — the MCP server workflow and the Google Calendar operations
-  behind it.
-- **Human support** — the handoff sub-workflow: tag the lead, notify the team.
-- **Persistence** — PostgreSQL (chat memory), Supabase/pgvector (knowledge),
-  Supabase `leads` (lead store), Redis (per-contact buffer).
-- **Outbound response** — response splitting, presence, and delivery back through
-  Evolution API to the customer.
-- **RAG ingestion pipeline** — a separate lane: Google Drive → extraction →
-  chunking → embeddings → Supabase vector store.
-
-A component-level walkthrough and Mermaid diagram are in
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); the detailed technical
-specification is in [`docs/HOW_IT_WORKS.md`](docs/HOW_IT_WORKS.md).
-
----
-
-## 5. How it works
-
-The journey of a single inbound message:
-
-1. **Receive.** The WhatsApp provider POSTs a `messages.upsert` event to the main
-   workflow's webhook.
-2. **Normalize.** Phone number, push name, event type, message type, timestamp,
-   optional base64 audio, and the `from_me` flag are extracted into a flat shape.
-3. **Guard.** Messages sent by the business itself are stored as assistant memory
-   and not reprocessed; only inbound messages continue.
-4. **Reset check.** If the message equals the configured reset keyword, the
-   contact's stored conversation memory is cleared and the turn ends.
-5. **Lead upsert.** The contact is looked up in `leads`; created if new, otherwise
-   its message count and last-interaction timestamp are updated.
-6. **Route by type.** Text passes straight through; audio is converted to binary
-   and transcribed to text.
-7. **Handoff guard.** If the lead is tagged for human service, the message is
-   recorded to memory only — the agent does not run.
-8. **Buffer & debounce.** The message is appended to a per-contact Redis list;
-   after a short wait the flow continues only if no newer message has arrived,
-   then the buffered fragments are joined into one prompt.
-9. **Agent turn.** The AI Agent runs with PostgreSQL memory and its tools
-   (RAG retrieval, MCP calendar client, human-handoff, calculator), consulting the
-   knowledge base and/or calling tools as needed, and asking for confirmation
-   before any calendar write.
-10. **Deliver.** The answer is split on blank lines into parts; for each part the
-    workflow sends a "typing…" presence, sends the message, waits, and continues —
-    or, if the agent escalated, the handoff sub-workflow tags the lead and
-    notifies the team.
-
-Full detail — state transitions, error paths, and per-component responsibilities —
-is in [`docs/HOW_IT_WORKS.md`](docs/HOW_IT_WORKS.md).
-
----
-
-## 6. Workflow ecosystem
-
-The system is split into four workflows with distinct responsibilities and stable
-interfaces: a **main orchestrator**, a **RAG ingestion** pipeline, an **MCP
-server** for scheduling, and an independent **human handoff** flow.
-
-| Workflow (file) | Responsibility | Trigger | Key integrations | Produces |
-|---|---|---|---|---|
-| **Main orchestrator**<br>[`workflows/ai-agent-main.json`](workflows/ai-agent-main.json) | End-to-end handling of an inbound message through to the outbound reply or escalation. | HTTP webhook (WhatsApp provider) | Evolution API, PostgreSQL, Supabase (`leads` + vector store), Redis, OpenAI, Google Gemini, MCP client, sub-workflow call | Customer replies on WhatsApp; updated lead and conversation memory; optional handoff |
-| **RAG knowledge base ingestion**<br>[`workflows/rag-knowledge-base.json`](workflows/rag-knowledge-base.json) | Keep the vector store synchronized with a Drive folder. | Google Drive triggers (`fileCreated`, `folderUpdated`), polled every minute | Google Drive, Google Gemini embeddings, Supabase vector store | Chunked, embedded documents in the `documents` table with source metadata |
-| **Calendar MCP tools**<br>[`workflows/calendar-mcp-tools.json`](workflows/calendar-mcp-tools.json) | Expose appointment operations as MCP tools. | n8n MCP trigger (server endpoint) | Google Calendar (OAuth2) | Event search / create / update / delete results returned to the calling agent |
-| **Human handoff**<br>[`workflows/human-handoff.json`](workflows/human-handoff.json) | Flag a conversation for human service and alert the team. | Execute-sub-workflow trigger (called by the orchestrator) | Supabase (`leads`), Evolution API | Lead tagged for human service; WhatsApp notification with reason and context |
-
----
-
-## 7. Architecture decisions
-
-**Why Redis (buffer + debounce).** Customers often send a thought across several
-quick messages. Without buffering, the agent would run once per fragment and reply
-with partial context. A per-contact Redis list plus a short settle window
-consolidates a burst into a single, complete prompt and suppresses duplicate
-processing.
-
-**Why persistent memory (PostgreSQL).** Conversation context must survive between
-messages, across sessions, and across n8n restarts. Storing history in Postgres,
-keyed by phone number, also makes the "reset" behavior a simple, explicit
-delete rather than hidden in-process state.
-
-**Why RAG is a separate workflow.** Ingestion cadence (documents change rarely,
-in bursts) is unrelated to serving cadence (constant). Separating them lets the
-knowledge base be updated — re-chunked and re-embedded — without touching or
-redeploying the agent, and keeps the delete-then-reinsert idempotency logic out of
-the request path.
-
-**Why MCP for scheduling.** The agent calls a *capability* ("manage
-appointments"), not a Google Calendar implementation. The calendar logic lives
-behind an MCP server, so it can change independently and be reused by other MCP
-clients without modifying the agent.
-
-**Why handoff is its own flow.** Escalation is a distinct concern with its own
-side effects (tagging, notifying). As a sub-workflow it is deterministic,
-independently testable and reusable, and keeps the orchestrator focused on the
-conversational path.
-
-**Why four workflows.** Each can be imported, versioned, activated, and scaled on
-its own; the interfaces between them (webhook, MCP endpoint, sub-workflow call,
-shared `documents` table) are explicit and small.
-
----
-
-## 8. Reliability and production-oriented concerns
-
-This repository ships a **production-oriented architecture**, not a turnkey
-production deployment. What is present:
-
-- **Idempotent ingestion** — before inserting new chunks for a file, the pipeline
-  deletes existing chunks with the same `file_id`, so re-processing replaces
-  rather than duplicates.
-- **Message buffering** — bursts are consolidated; the post-wait equality check
-  prevents double processing of the same buffered state.
-- **Per-contact state keys** — memory, buffer, and lead records are all keyed by
-  phone number, isolating concurrent conversations.
-- **Explicit message-type handling** — a router separates text and audio; the
-  normalization step has a fallback chain for resolving the message text.
-- **Confirmation before sensitive actions** — the agent prompt mandates a summary
-  and explicit confirmation before any calendar create / update / delete.
-- **Post-handoff guard** — tagged leads bypass the agent path (see caveat in
-  [Limitations](#14-limitations-and-roadmap)).
-- **Credential isolation** — no credentials or environment-specific identifiers
-  are stored in the workflow JSON; see [`docs/SECURITY.md`](docs/SECURITY.md).
-
-What is **not** included: an automated test suite, a global error-handling / retry
-workflow, dead-letter handling, structured logging, metrics, tracing, or an
-alerting layer. These would be required before calling any deployment
-"production-ready".
-
----
-
-## 9. Technology stack
+## Technology Stack
 
 | Technology | Responsibility | Architectural layer |
 |---|---|---|
@@ -247,12 +223,12 @@ alerting layer. These would be required before calling any deployment
 | **Model Context Protocol** (n8n MCP trigger + client) | Capability abstraction for scheduling | AI ↔ external tools |
 
 > The shipped configuration uses OpenAI for the agent and Google Gemini for
-> transcription and embeddings. These are provider choices encoded in the node
-> parameters, not a built-in provider-switching feature.
+> transcription and embeddings — provider choices encoded in the node parameters,
+> not a built-in provider-switching feature.
 
 ---
 
-## 10. Repository structure
+## Repository Structure
 
 ```
 .
@@ -265,7 +241,8 @@ alerting layer. These would be required before calling any deployment
 │   ├── SECURITY.md               # what was removed, how to supply config safely
 │   ├── SETUP.md                  # prerequisites, import, credentials, activation order, smoke tests
 │   └── images/
-│       └── architecture-overview.svg   # hand-authored vector architecture diagram
+│       ├── architecture.svg              # high-level solution architecture (shown above)
+│       └── architecture-overview.svg     # detailed layered architecture diagram
 └── workflows/
     ├── ai-agent-main.json        # main orchestrator
     ├── rag-knowledge-base.json   # RAG ingestion pipeline
@@ -275,27 +252,13 @@ alerting layer. These would be required before calling any deployment
 
 - **`workflows/`** — the four n8n workflow exports; import these into your instance.
 - **`docs/`** — architecture, specification, security, and setup documentation.
-- **`docs/images/`** — the architecture diagram, embedded in this README by
-  relative path.
-- **`.env.example`** — the full list of configuration variables the deployment
-  needs; every value is a `YOUR_*` placeholder.
+- **`docs/images/`** — architecture diagrams, embedded in this README by relative path.
+- **`.env.example`** — the full list of configuration variables; every value is a
+  `YOUR_*` placeholder.
 
 ---
 
-## 11. What is sanitized
-
-The workflow JSON in this repository is **sanitized**. Removed and replaced with
-`YOUR_*` placeholders: credential IDs and names, the n8n instance ID, workflow
-version IDs, production hostnames and IPs, webhook and MCP endpoint identifiers,
-Google Drive and Calendar IDs, the messaging instance name, phone numbers, all
-pinned execution data, and company-specific prompt content (identity, pricing,
-policies) — which is replaced by a neutral placeholder company. The only
-identifiers left are n8n's internal structural node IDs, which carry no secret or
-personal data. Details: [`docs/SECURITY.md`](docs/SECURITY.md).
-
----
-
-## 12. Setup
+## Setup
 
 Full instructions: [`docs/SETUP.md`](docs/SETUP.md). In short:
 
@@ -328,34 +291,51 @@ Drive and Google Calendar (OAuth2); an LLM provider; an embeddings provider.
 **Basic test** — send a knowledge-base question (expect a grounded answer), a
 voice note (expect transcription + reply), a booking request followed by a
 confirmation (expect a calendar event), and a "talk to a human" request (expect
-the lead tagged and the team notified, with automated replies stopping).
+the lead tagged and the operator notified, with automated replies stopping).
 
 ---
 
-## 13. Security
+## Security
 
-- No credentials, tokens, or environment-specific identifiers are versioned. All
-  configuration is supplied at deploy time through the n8n credential store and
-  environment variables — never inside the workflow JSON.
-- `.env` and `*.env` files are git-ignored; only `.env.example` (placeholders) is
-  tracked.
-- Contributor rules, the full list of removed data, and operational hardening
-  notes are in [`docs/SECURITY.md`](docs/SECURITY.md).
+- The repository contains **sanitized workflow exports only**. Production secrets
+  are not versioned.
+- Credentials and environment-specific identifiers must be configured directly in
+  n8n and the environment — never inside the workflow JSON.
+- Real webhook URLs, infrastructure endpoints, and MCP endpoints were removed and
+  replaced with `YOUR_*` placeholders.
+- Production execution data (`pinData`), real messages, and PII were removed.
+- `.env` and `*.env` files are git-ignored and must never be committed; only
+  `.env.example` (placeholders) is tracked.
+
+Full detail, the complete list of removed data, contributor rules, and operational
+hardening notes: [`docs/SECURITY.md`](docs/SECURITY.md).
 
 ---
 
-## 14. Limitations and roadmap
+## Sanitization
+
+The workflow JSON is **sanitized**. Removed and replaced with `YOUR_*`
+placeholders: credential IDs and names, the n8n instance ID, workflow version IDs,
+production hostnames and IPs, webhook and MCP endpoint identifiers, Google Drive
+and Calendar IDs, the messaging instance name, phone numbers, all pinned execution
+data, and company-specific prompt content (identity, pricing, policies) — replaced
+by a neutral placeholder company. The only identifiers left are n8n's internal
+structural node IDs, which carry no secret or personal data.
+
+---
+
+## Limitations and Roadmap
 
 ### Current functionality
-Everything described in [Core capabilities](#3-core-capabilities) is implemented in
+Everything described in [Core Capabilities](#core-capabilities) is implemented in
 the workflows in this repository.
 
 ### Known limitations
 - **Handoff tag mismatch (unverified).** The handoff sub-workflow writes the lead
   tag `"Atendimento Humano"`, while the main workflow's post-handoff guard checks
   for `"atendimento_humano"`. As shipped, the guard condition may not match the
-  value the handoff sets; this should be verified and aligned in a real
-  deployment. *(Not changed here — this task does not modify workflow behavior.)*
+  value the handoff sets; verify and align in a real deployment. *(Not changed
+  here — this work does not modify workflow behavior.)*
 - **Single instance assumptions.** The nodes target one WhatsApp instance, one
   Google Calendar, and one Drive folder.
 - **Message types.** Only text and voice are handled; images, documents,
@@ -364,7 +344,7 @@ the workflows in this repository.
   uses a placeholder company; it must be rewritten per deployment.
 - **Reset keyword.** It is a plain configurable string, not access-controlled.
 - **No test / observability layer.** See
-  [Reliability](#8-reliability-and-production-oriented-concerns).
+  [Production-Oriented Design → Not included](#production-oriented-design).
 
 ### Possible future work (not implemented)
 - Automated workflow tests and a CI check.
@@ -379,7 +359,7 @@ the workflows in this repository.
 
 ---
 
-## 15. Author
+## Author
 
 **Murilo Guimarães Costa** — IT Project Specialist ("Especialista em Projetos de
 TI").

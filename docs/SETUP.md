@@ -16,8 +16,8 @@ the pieces fit together, not vendor-specific instructions.
 | **Redis** | Short-lived message buffer / debounce. | Any Redis-compatible instance. |
 | **Google Drive** | Source of knowledge-base documents. | One folder the ingestion workflow watches. |
 | **Google Calendar** | Appointment storage. | One calendar the MCP tools operate on. |
-| **LLM provider** | Chat model for the agent + audio-capable model for transcription. | Configurable; the workflows reference it through an n8n credential. |
-| **Embeddings provider** | Turns documents and queries into vectors. | Can be the same vendor as the LLM or a different one. |
+| **LLM provider** | Chat model for the agent + audio-capable model for transcription. | Shipped nodes use OpenAI (`gpt-5-mini`) for the agent and Google Gemini (`gemini-2.5-flash`) for transcription; swap by editing those nodes and their credentials. |
+| **Embeddings provider** | Turns documents and queries into vectors. | Shipped nodes use Google Gemini embeddings (same credential as transcription); can be changed independently. |
 
 ## Provisioning checklist
 

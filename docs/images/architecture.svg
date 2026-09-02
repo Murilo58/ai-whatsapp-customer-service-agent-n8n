@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1360 880" width="1360" height="880" role="img" aria-labelledby="t d" font-family="'Segoe UI', ui-sans-serif, system-ui, -apple-system, Helvetica, Arial, sans-serif">
+  <title id="t">Solution Architecture</title>
+  <desc id="d">WhatsApp messages arrive through the Evolution API into the n8n main workflow and its AI Agent. The AI Agent integrates with a RAG knowledge base (Google Drive, embeddings, Supabase vector store), persistent memory in PostgreSQL, MCP tools for Google Calendar, lead management in Supabase, audio processing with transcription, and a human handoff to human support. Responses flow back through response processing and the Evolution API to WhatsApp.</desc>
+
+  <defs>
+    <marker id="a" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L9,3.5 L0,7 Z" fill="#9aa4af"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1360" height="880" fill="#0d1117"/>
+  <text x="48" y="44" fill="#e6edf3" font-size="24" font-weight="700">Solution Architecture</text>
+  <text x="48" y="68" fill="#8b949e" font-size="13">Modular n8n design &#183; four specialized workflows &#183; AI Agent with retrieval, tools and human escalation</text>
+
+  <!-- ===================== INBOUND SPINE (left column) ===================== -->
+  <g>
+    <rect x="48" y="96" width="210" height="54" rx="9" fill="#161b22" stroke="#2dd4bf" stroke-width="1.7"/>
+    <text x="153" y="128" text-anchor="middle" fill="#e6edf3" font-size="15" font-weight="600">WhatsApp</text>
+  </g>
+  <g>
+    <rect x="48" y="176" width="210" height="54" rx="9" fill="#161b22" stroke="#2dd4bf" stroke-width="1.7"/>
+    <text x="153" y="208" text-anchor="middle" fill="#e6edf3" font-size="15" font-weight="600">Evolution API</text>
+  </g>
+  <g>
+    <rect x="48" y="256" width="210" height="54" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.7"/>
+    <text x="153" y="282" text-anchor="middle" fill="#e6edf3" font-size="14.5" font-weight="600">n8n Main Workflow</text>
+    <text x="153" y="299" text-anchor="middle" fill="#8b949e" font-size="10.5">normalize &#183; route &#183; buffer</text>
+  </g>
+  <g>
+    <rect x="48" y="336" width="210" height="118" rx="10" fill="#1c2333" stroke="#bc8cff" stroke-width="2.2"/>
+    <text x="153" y="386" text-anchor="middle" fill="#e6edf3" font-size="17" font-weight="700">AI Agent</text>
+    <text x="153" y="408" text-anchor="middle" fill="#8b949e" font-size="10.5">intent &#183; tool selection</text>
+    <text x="153" y="424" text-anchor="middle" fill="#8b949e" font-size="10.5">grounded reply</text>
+  </g>
+  <line x1="153" y1="150" x2="153" y2="176" stroke="#9aa4af" stroke-width="1.7" marker-end="url(#a)"/>
+  <line x1="153" y1="230" x2="153" y2="256" stroke="#9aa4af" stroke-width="1.7" marker-end="url(#a)"/>
+  <line x1="153" y1="310" x2="153" y2="336" stroke="#9aa4af" stroke-width="1.7" marker-end="url(#a)"/>
+
+  <!-- ===================== AI AGENT INTEGRATIONS (right area) ===================== -->
+
+  <!-- RAG / Knowledge Base -->
+  <rect x="330" y="92" width="982" height="118" rx="12" fill="#a5b4fc" fill-opacity="0.06" stroke="#a5b4fc" stroke-opacity="0.55" stroke-width="1.5"/>
+  <text x="350" y="116" fill="#a5b4fc" font-size="12.5" font-weight="700" letter-spacing="1">RAG / KNOWLEDGE BASE</text>
+  <g>
+    <rect x="350" y="128" width="290" height="62" rx="9" fill="#1c2333" stroke="#a5b4fc" stroke-width="1.6"/>
+    <text x="495" y="164" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600">Google Drive</text>
+  </g>
+  <g>
+    <rect x="672" y="128" width="290" height="62" rx="9" fill="#1c2333" stroke="#a5b4fc" stroke-width="1.6"/>
+    <text x="817" y="164" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600">Embeddings</text>
+  </g>
+  <g>
+    <rect x="994" y="128" width="298" height="62" rx="9" fill="#1c2333" stroke="#a5b4fc" stroke-width="1.6"/>
+    <text x="1143" y="164" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600">Supabase Vector Store</text>
+  </g>
+  <line x1="640" y1="159" x2="672" y2="159" stroke="#6e7681" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="962" y1="159" x2="994" y2="159" stroke="#6e7681" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- Persistent Memory -->
+  <rect x="330" y="228" width="982" height="96" rx="12" fill="#f0b72f" fill-opacity="0.06" stroke="#f0b72f" stroke-opacity="0.55" stroke-width="1.5"/>
+  <text x="350" y="252" fill="#f0b72f" font-size="12.5" font-weight="700" letter-spacing="1">PERSISTENT MEMORY</text>
+  <g>
+    <rect x="350" y="262" width="320" height="50" rx="9" fill="#1c2333" stroke="#f0b72f" stroke-width="1.6"/>
+    <text x="510" y="292" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600">PostgreSQL</text>
+  </g>
+  <text x="700" y="291" fill="#8b949e" font-size="12">conversation history, keyed by contact</text>
+
+  <!-- MCP Tools -->
+  <rect x="330" y="342" width="982" height="96" rx="12" fill="#39c5cf" fill-opacity="0.06" stroke="#39c5cf" stroke-opacity="0.55" stroke-width="1.5"/>
+  <text x="350" y="366" fill="#39c5cf" font-size="12.5" font-weight="700" letter-spacing="1">MCP TOOLS</text>
+  <g>
+    <rect x="350" y="376" width="320" height="50" rx="9" fill="#1c2333" stroke="#39c5cf" stroke-width="1.6"/>
+    <text x="510" y="406" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600">Google Calendar</text>
+  </g>
+  <text x="700" y="405" fill="#8b949e" font-size="12">search &#183; create &#183; update &#183; cancel events</text>
+
+  <!-- Lead Management -->
+  <rect x="330" y="456" width="982" height="96" rx="12" fill="#7ee787" fill-opacity="0.06" stroke="#7ee787" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="350" y="480" fill="#7ee787" font-size="12.5" font-weight="700" letter-spacing="1">LEAD MANAGEMENT</text>
+  <g>
+    <rect x="350" y="490" width="320" height="50" rx="9" fill="#1c2333" stroke="#7ee787" stroke-width="1.6"/>
+    <text x="510" y="520" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600">Supabase</text>
+  </g>
+  <text x="700" y="519" fill="#8b949e" font-size="12">contact records &#183; status &#183; tags &#183; counters</text>
+
+  <!-- Audio Processing -->
+  <rect x="330" y="570" width="982" height="96" rx="12" fill="#79c0ff" fill-opacity="0.06" stroke="#79c0ff" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="350" y="594" fill="#79c0ff" font-size="12.5" font-weight="700" letter-spacing="1">AUDIO PROCESSING</text>
+  <g>
+    <rect x="350" y="604" width="320" height="50" rx="9" fill="#1c2333" stroke="#79c0ff" stroke-width="1.6"/>
+    <text x="510" y="634" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600">Transcription</text>
+  </g>
+  <text x="700" y="633" fill="#8b949e" font-size="12">voice notes converted to text before the agent</text>
+
+  <!-- Human Handoff -->
+  <rect x="330" y="684" width="982" height="96" rx="12" fill="#ff7b72" fill-opacity="0.06" stroke="#ff7b72" stroke-opacity="0.55" stroke-width="1.5"/>
+  <text x="350" y="708" fill="#ff7b72" font-size="12.5" font-weight="700" letter-spacing="1">HUMAN HANDOFF</text>
+  <g>
+    <rect x="350" y="718" width="320" height="50" rx="9" fill="#1c2333" stroke="#ff7b72" stroke-width="1.6"/>
+    <text x="510" y="748" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600">Human Support</text>
+  </g>
+  <text x="700" y="747" fill="#8b949e" font-size="12">escalate &#183; tag lead &#183; notify operator</text>
+
+  <!-- AI Agent -> integration fan-out -->
+  <polyline points="258,360 296,360 296,151 330,151" fill="none" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#a)"/>
+  <polyline points="258,372 300,372 300,276 330,276" fill="none" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#a)"/>
+  <polyline points="258,390 304,390 330,390" fill="none" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#a)"/>
+  <polyline points="258,404 300,404 300,504 330,504" fill="none" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#a)"/>
+  <polyline points="258,416 296,416 296,618 330,618" fill="none" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#a)"/>
+  <polyline points="258,430 292,430 292,732 330,732" fill="none" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#a)"/>
+
+  <!-- ===================== RETURN PATH ===================== -->
+  <rect x="40" y="792" width="1272" height="72" rx="12" fill="#3fb950" fill-opacity="0.06" stroke="#3fb950" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="58" y="812" fill="#3fb950" font-size="12" font-weight="700" letter-spacing="1">RESPONSE PATH</text>
+  <g>
+    <rect x="200" y="806" width="250" height="46" rx="9" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+    <text x="325" y="834" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Response Processing</text>
+  </g>
+  <g>
+    <rect x="520" y="806" width="220" height="46" rx="9" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+    <text x="630" y="834" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Evolution API</text>
+  </g>
+  <g>
+    <rect x="810" y="806" width="200" height="46" rx="9" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+    <text x="910" y="834" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">WhatsApp</text>
+  </g>
+  <polyline points="120,454 120,829 200,829" fill="none" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#a)"/>
+  <text x="126" y="486" fill="#8b949e" font-size="10.5">reply</text>
+  <line x1="450" y1="829" x2="520" y2="829" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#a)"/>
+  <line x1="740" y1="829" x2="810" y2="829" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#a)"/>
+</svg>
