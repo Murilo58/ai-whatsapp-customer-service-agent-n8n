@@ -382,7 +382,7 @@ the workflows in this repository.
 ## 15. Author
 
 **Murilo Guimarães Costa** — IT Project Specialist ("Especialista em Projetos de
-TI") moving into AI Engineering.
+TI").
 
 This project reflects work on **solution architecture**, **workflow and process
 modeling**, **systems integration**, **business-rule design**, and the **practical
